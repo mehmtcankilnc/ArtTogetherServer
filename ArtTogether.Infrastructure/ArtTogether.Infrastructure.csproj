@@ -23,4 +23,8 @@
     <ProjectReference Include="..\ArtTogether.Domain\ArtTogether.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

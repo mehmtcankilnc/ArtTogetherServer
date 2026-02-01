@@ -1,3 +1,5 @@
+using ArtTogether.API.Extensions;
+using ArtTogether.API.Middlewares;
 using ArtTogether.Application.Interfaces;
 using ArtTogether.Domain.Interfaces;
 using ArtTogether.Infrastructure.Hubs;
@@ -7,10 +9,13 @@ using ArtTogether.Infrastructure.Repositories;
 using ArtTogether.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +47,21 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/drawingHub"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddMediatR(cfg =>
@@ -51,9 +71,13 @@ builder.Services.AddMediatR(cfg =>
 });
 
 builder.Services.AddScoped<IStrokeRepository, StrokeRepository>();
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddTransient<IDrawingNotifier, SignalRDrawingNotifier>();
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.AddFilter<ProjectAccessFilter>();
+});
 
 builder.Services.AddControllers();
 
@@ -64,6 +88,8 @@ app.UseCors(x => x
     .AllowAnyHeader()
     .SetIsOriginAllowed(origin => true)
     .AllowCredentials());
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 //app.UseHttpsRedirection();
 app.UseAuthentication();    

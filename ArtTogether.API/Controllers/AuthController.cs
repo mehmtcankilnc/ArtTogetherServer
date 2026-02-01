@@ -21,5 +21,12 @@ namespace ArtTogether.API.Controllers
             var result = await authService.LoginWithGoogleAsync(dto);
             return Ok(result);
         }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] TokenDto dto)
+        {
+            var result = await authService.RefreshTokenAsync(dto.AccessToken, dto.RefreshToken);
+            return Ok(result);
+        }
     }
 }

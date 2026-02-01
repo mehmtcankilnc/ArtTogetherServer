@@ -9,8 +9,8 @@ public class SignalRDrawingNotifier(IHubContext<DrawingHub, IDrawingHubClient> h
 {
     private readonly IHubContext<DrawingHub, IDrawingHubClient> _hubContext = hubContext;
 
-    public async Task BroadcastStrokeAsync(string sessionId, string userId, StrokeDto stroke)
+    public async Task BroadcastStrokeAsync(string projectId, string userId, StrokeDto stroke, int? brushType)
     {
-        await _hubContext.Clients.Group(sessionId).ReceiveStroke(userId, stroke);
+        await _hubContext.Clients.Group(projectId).ReceiveStroke(userId, stroke, brushType);
     }
 }

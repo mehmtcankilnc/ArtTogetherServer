@@ -1,4 +1,5 @@
 ﻿using ArtTogether.Application.Features.Strokes.Queries;
+using ArtTogether.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,14 @@ public class StrokesController(IMediator mediator) : ControllerBase
 {
     private readonly IMediator _mediator = mediator;
 
-    [HttpGet("{roomId}")]
-    public async Task<IActionResult> GetHistory(string roomId)
+    [HttpGet("{projectId}")]
+    public async Task<IActionResult> GetHistory(string projectId)
     {
-        var query = new GetStrokesBySessionQuery(roomId);
+        if (!Guid.TryParse(projectId, out Guid projectGuid))
+        {
+            return BadRequest();
+        }
+        var query = new GetStrokesBySessionQuery(projectGuid);
         var result = await _mediator.Send(query);
         return Ok(result);
     }

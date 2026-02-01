@@ -4,7 +4,7 @@ using MediatR;
 
 namespace ArtTogether.Application.Features.Strokes.Queries;
 
-public record GetStrokesBySessionQuery(string SessionId) : IRequest<List<StrokeDto>>;
+public record GetStrokesBySessionQuery(Guid ProjectId) : IRequest<List<StrokeDto>>;
 
 public class GetStrokesBySessionQueryHandler(IStrokeRepository repository)
     : IRequestHandler<GetStrokesBySessionQuery, List<StrokeDto>>
@@ -13,7 +13,7 @@ public class GetStrokesBySessionQueryHandler(IStrokeRepository repository)
 
     public async Task<List<StrokeDto>> Handle(GetStrokesBySessionQuery request, CancellationToken cancellationToken)
     {
-        var strokes = await _repository.GetBySessionIdAsync(request.SessionId);
+        var strokes = await _repository.GetBySessionIdAsync(request.ProjectId);
 
         return strokes.Select(s => new StrokeDto
         {

@@ -22,6 +22,50 @@ namespace ArtTogether.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ArtTogether.Domain.Entities.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedUserId");
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("ArtTogether.Domain.Entities.ProjectMember", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ProjectId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProjectMembers");
+                });
+
             modelBuilder.Entity("ArtTogether.Domain.Entities.Stroke", b =>
                 {
                     b.Property<Guid>("Id")
@@ -39,18 +83,23 @@ namespace ArtTogether.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("SessionId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.Property<float>("Width")
                         .HasColumnType("real");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Strokes");
                 });
@@ -142,6 +191,69 @@ namespace ArtTogether.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("IdentityUsers", (string)null);
+                });
+
+            modelBuilder.Entity("ArtTogether.Domain.Entities.Project", b =>
+                {
+                    b.HasOne("ArtTogether.Domain.Entities.User", "CreatedBy")
+                        .WithMany("OwnedProjects")
+                        .HasForeignKey("CreatedUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("ArtTogether.Domain.Entities.ProjectMember", b =>
+                {
+                    b.HasOne("ArtTogether.Domain.Entities.Project", "Project")
+                        .WithMany("Members")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArtTogether.Domain.Entities.User", "User")
+                        .WithMany("ProjectMemberships")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ArtTogether.Domain.Entities.Stroke", b =>
+                {
+                    b.HasOne("ArtTogether.Domain.Entities.Project", "Project")
+                        .WithMany("Strokes")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArtTogether.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ArtTogether.Domain.Entities.Project", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("Strokes");
+                });
+
+            modelBuilder.Entity("ArtTogether.Domain.Entities.User", b =>
+                {
+                    b.Navigation("OwnedProjects");
+
+                    b.Navigation("ProjectMemberships");
                 });
 #pragma warning restore 612, 618
         }

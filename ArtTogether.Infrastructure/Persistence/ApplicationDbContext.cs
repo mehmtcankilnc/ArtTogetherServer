@@ -11,6 +11,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Stroke> Strokes { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Project> Projects { get; set; }
+    public DbSet<ProjectMember> ProjectMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -23,5 +25,30 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Ignore<IdentityUserLogin<Guid>>();
         builder.Ignore<IdentityRoleClaim<Guid>>();
         builder.Ignore<IdentityUserToken<Guid>>();
+
+        builder.Entity<ProjectMember>()
+            .HasKey(pm => new { pm.ProjectId, pm.UserId });
+
+        builder.Entity<ProjectMember>()
+            .HasOne(pm => pm.Project)
+            .WithMany(p => p.Members)
+            .HasForeignKey(pm => pm.ProjectId);
+
+        builder.Entity<ProjectMember>()
+            .HasOne(pm => pm.User)
+            .WithMany(u => u.ProjectMemberships)
+            .HasForeignKey(pm => pm.UserId);
+
+        builder.Entity<Stroke>()
+            .HasOne(s => s.Project)
+            .WithMany(p => p.Strokes)
+            .HasForeignKey(s => s.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Project>()
+            .HasOne(p => p.CreatedBy)
+            .WithMany(u => u.OwnedProjects)
+            .HasForeignKey(p => p.CreatedUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

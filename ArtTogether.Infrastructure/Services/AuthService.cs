@@ -6,6 +6,11 @@ using ArtTogether.Infrastructure.Persistence;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ArtTogether.Infrastructure.Services;
 
@@ -129,5 +134,51 @@ public class AuthService(
             AccessToken = accessToken,
             RefreshToken = refreshToken,
         };
+    }
+
+    public async Task<TokenDto> RefreshTokenAsync(string accessToken, string refreshToken)
+    {
+        var principal = GetPrincipalFromExpiredToken(accessToken);
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId == null) throw new Exception("Geçersiz Token");
+
+        var identityUser = await userManager.FindByIdAsync(userId);
+
+        if (identityUser == null || identityUser.RefreshToken != refreshToken
+            || identityUser.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            throw new Exception("Geçersiz veya süresi dolmuş refresh token");
+
+        var appUser = await dbContext.Users.FindAsync(Guid.Parse(userId));
+
+        var newAccessToken = tokenService.CreateToken(appUser!);
+        var newRefreshToken = tokenService.GenerateRefreshToken();
+
+        identityUser.RefreshToken = newRefreshToken;
+        identityUser.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+        await userManager.UpdateAsync(identityUser);
+        return new TokenDto { AccessToken = newAccessToken, RefreshToken = newRefreshToken };
+    }
+
+    private ClaimsPrincipal GetPrincipalFromExpiredToken(string accessToken)
+    {
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"]!)),
+            ValidateLifetime = false
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var principal = tokenHandler.ValidateToken(accessToken, tokenValidationParameters, out SecurityToken securityToken);
+
+        if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            throw new SecurityTokenException("Geçersiz Token");
+
+        return principal;
     }
 }
