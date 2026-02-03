@@ -1,4 +1,5 @@
 ﻿using ArtTogether.Application.DTOs;
+using ArtTogether.Application.DTOs.Requests;
 using ArtTogether.Application.Features.Projects.Commands;
 using ArtTogether.Application.Features.Projects.Queries;
 using MediatR;
@@ -32,21 +33,28 @@ namespace ArtTogether.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateProject([FromBody] string projectName)
+        public async Task<IActionResult> CreateProject([FromBody] CreateProjectRequest request)
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var projectId = await _mediator.Send(new CreateProjectCommand(projectName, userId));
+            var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                  ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var baseUrl = "https://arttogether.app";
+            if (Guid.TryParse(userIdClaim, out Guid userId))
+            {
+                var projectId = await _mediator.Send(new CreateProjectCommand(request, userId));
 
-            var response = new CreatedProjectDto(
-                ProjectId: projectId,
-                ProjectName: projectName,
-                InvitationUrl: $"{baseUrl}/join/{projectId}",
-                DeepLinkUrl: $"arttogether://project/{projectId}"
-            );
+                var baseUrl = "https://arttogether.app";
 
-            return Ok(response);
+                var response = new CreatedProjectDto(
+                    ProjectId: projectId,
+                    ProjectName: request.ProjectName,
+                    InvitationUrl: $"{baseUrl}/join/{projectId}",
+                    DeepLinkUrl: $"arttogether://project/{projectId}"
+                );
+
+                return Ok(response);
+            }
+
+            return Unauthorized("Kullanıcı kimliği doğrulanamadı.");
         }
     }
 }

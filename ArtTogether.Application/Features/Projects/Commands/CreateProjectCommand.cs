@@ -1,10 +1,11 @@
-﻿using ArtTogether.Domain.Entities;
+﻿using ArtTogether.Application.DTOs.Requests;
+using ArtTogether.Domain.Entities;
 using ArtTogether.Domain.Interfaces;
 using MediatR;
 
 namespace ArtTogether.Application.Features.Projects.Commands;
 
-public record CreateProjectCommand(string ProjectName, Guid OwnerId) : IRequest<Guid>;
+public record CreateProjectCommand(CreateProjectRequest ProjectInfo, Guid OwnerId) : IRequest<Guid>;
 
 public class CreateProjectCommandHandler(IProjectRepository repository) : IRequestHandler<CreateProjectCommand, Guid>
 {
@@ -15,7 +16,10 @@ public class CreateProjectCommandHandler(IProjectRepository repository) : IReque
         var project = new Project
         {
             Id = Guid.NewGuid(),
-            ProjectName = request.ProjectName,
+            ProjectName = request.ProjectInfo.ProjectName,
+            Width = request.ProjectInfo.ProjectWidth,
+            Height = request.ProjectInfo.ProjectHeight,
+            BackgroundColor = request.ProjectInfo.BackgroundColor,
             CreatedUserId = request.OwnerId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

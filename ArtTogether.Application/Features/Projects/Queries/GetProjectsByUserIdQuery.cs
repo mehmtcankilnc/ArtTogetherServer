@@ -21,6 +21,9 @@ public class GetProjectsByUserIdQueryHandler(IProjectRepository repository)
         {
             ProjectId = p.Id,
             ProjectName = p.ProjectName,
+            Width = p.Width,
+            Height = p.Height,
+            BackgroundColor = p.BackgroundColor,
             InvitationUrl = $"{baseUrl}/join/{p.Id}",
             DeepLinkUrl = $"arttogether://project/{p.Id}",
             CreatedAt = p.CreatedAt,

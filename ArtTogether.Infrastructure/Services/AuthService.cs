@@ -139,7 +139,7 @@ public class AuthService(
     public async Task<TokenDto> RefreshTokenAsync(string accessToken, string refreshToken)
     {
         var principal = GetPrincipalFromExpiredToken(accessToken);
-        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
         if (userId == null) throw new Exception("Geçersiz Token");
 
