@@ -11,6 +11,9 @@ public interface IDrawingHubClient
     Task ReceiveStroke(string userId, StrokeDto stroke, int? brushType);
     Task UserJoined(string userId);
     Task UserLeft(string userId);
+    Task UndoStroke(string projectId, Guid strokeId);
+    Task RedoStroke(string projectId, StrokeDto stroke);
+    Task CanvasCleared(string projectId);
 }
 
 public class DrawingHub(IMediator mediator) : Hub<IDrawingHubClient>
@@ -49,5 +52,59 @@ public class DrawingHub(IMediator mediator) : Hub<IDrawingHubClient>
         await _mediator.Send(command);
 
         await Clients.OthersInGroup(projectId).ReceiveStroke(userIdValue, stroke, 1);
+    }
+
+    public async Task UndoStroke(string projectId, string strokeId)
+    {
+        var userIdValue = Context.User?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                         ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            throw new HubException("Kullanıcı kimliği bulunamadı. Lütfen giriş yaptığınızdan emin olun.");
+        }
+
+        var strokeGuid = Guid.Parse(strokeId);
+        var command = new UndoStrokeCommand(projectId, strokeGuid);
+
+        await _mediator.Send(command);
+
+        await Clients.OthersInGroup(projectId).UndoStroke(projectId, strokeGuid);
+    }
+
+    public async Task RedoStroke(string projectId, string strokeId)
+    {
+        var userIdValue = Context.User?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                         ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            throw new HubException("Kullanıcı kimliği bulunamadı. Lütfen giriş yaptığınızdan emin olun.");
+        }
+
+        var strokeGuid = Guid.Parse(strokeId);
+        var command = new RedoStrokeCommand(projectId, strokeGuid);
+
+        var strokeDto = await _mediator.Send(command);
+
+        await Clients.OthersInGroup(projectId).RedoStroke(projectId, strokeDto);
+    }
+
+    public async Task ClearCanvas(string projectId)
+    {
+        var userIdValue = Context.User?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                         ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            throw new HubException("Kullanıcı kimliği bulunamadı. Lütfen giriş yaptığınızdan emin olun.");
+        }
+
+        var projectGuid = Guid.Parse(projectId);
+        var userGuid = Guid.Parse(userIdValue);
+
+        await _mediator.Send(new ClearCanvasCommand(projectGuid, userGuid));
+
+        await Clients.OthersInGroup(projectId).CanvasCleared(projectId);
     }
 }

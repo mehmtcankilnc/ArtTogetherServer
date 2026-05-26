@@ -3,6 +3,8 @@ using ArtTogether.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Reflection.Emit;
 
 namespace ArtTogether.Infrastructure.Persistence;
 
@@ -50,5 +52,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany(u => u.OwnedProjects)
             .HasForeignKey(p => p.CreatedUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Project>()
+            .Property(e => e.Swatches)
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (c1, c2) => c1.SequenceEqual(c2),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()
+            ));
     }
 }

@@ -17,13 +17,14 @@ public class SendStrokeCommandHandler(IStrokeRepository repository, IDrawingNoti
     {
         var stroke = new Stroke
         {
+            Id = request.StrokeData.Id,
             ProjectId = request.ProjectId,
             UserId = request.UserId,
             Color = request.StrokeData.Color,
             Width = request.StrokeData.Width,
             PathData = request.StrokeData.PathData,
             CreatedAt = DateTime.UtcNow,
-            Type = request.BrushType == 0 ? StrokeType.Brush : StrokeType.Eraser,
+            Type = request.StrokeData.IsEraser ? StrokeType.Eraser : StrokeType.Brush,
         };
 
         await _repository.AddAsync(stroke);

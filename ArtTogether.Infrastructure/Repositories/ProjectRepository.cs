@@ -1,4 +1,5 @@
-﻿using ArtTogether.Domain.Entities;
+﻿using ArtTogether.Application.Common;
+using ArtTogether.Domain.Entities;
 using ArtTogether.Domain.Interfaces;
 using ArtTogether.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -36,5 +37,15 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
             .Select(pm => pm.Project)
             .OrderByDescending(p => p.UpdatedAt)
             .ToListAsync();
+    }
+
+    public async Task<Project?> GetProjectByIdAsync(Guid projectId)
+    {
+        return await _context.Projects.FindAsync(projectId);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
     }
 }

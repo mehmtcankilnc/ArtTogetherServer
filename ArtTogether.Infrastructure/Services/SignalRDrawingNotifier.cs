@@ -13,4 +13,14 @@ public class SignalRDrawingNotifier(IHubContext<DrawingHub, IDrawingHubClient> h
     {
         await _hubContext.Clients.Group(projectId).ReceiveStroke(userId, stroke, brushType);
     }
+
+    public async Task BroadcastUndoStrokeAsync(string projectId, Guid strokeId)
+    {
+        await _hubContext.Clients.Group(projectId).UndoStroke(projectId, strokeId);
+    }
+
+    public async Task BroadcastRedoStrokeAsync(string projectId, StrokeDto stroke)
+    {
+        await _hubContext.Clients.Group(projectId).RedoStroke(projectId, stroke);
+    }
 }

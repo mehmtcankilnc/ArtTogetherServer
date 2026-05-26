@@ -2,6 +2,7 @@
 using ArtTogether.Application.DTOs.Requests;
 using ArtTogether.Application.Features.Projects.Commands;
 using ArtTogether.Application.Features.Projects.Queries;
+using ArtTogether.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,24 @@ namespace ArtTogether.API.Controllers
             return Unauthorized("Kullanıcı kimliği doğrulanamadı.");
         }
 
+        [HttpGet("{projectId}")]
+        public async Task<IActionResult> GetProjectDetailsById([FromRoute] string projectId)
+        {
+            var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                  ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (Guid.TryParse(userIdClaim, out Guid userId))
+            {
+                if (Guid.TryParse(projectId, out Guid projectIdAsGuid))
+                {
+                    var project = await _mediator.Send(new GetProjectDetailsByIdQuery(projectIdAsGuid, userId));
+                    return Ok(project);
+                }
+            }
+
+            return Unauthorized("Kullanıcı kimliği doğrulanamadı.");
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateProject([FromBody] CreateProjectRequest request)
         {
@@ -52,6 +71,24 @@ namespace ArtTogether.API.Controllers
                 );
 
                 return Ok(response);
+            }
+
+            return Unauthorized("Kullanıcı kimliği doğrulanamadı.");
+        }
+
+        [HttpPut("{projectId}")]
+        public async Task<IActionResult> UpdateProject([FromRoute] string projectId, [FromBody] ProjectUpdateDto dto)
+        {
+            var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                  ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (Guid.TryParse(userIdClaim, out Guid userId))
+            {
+                if (Guid.TryParse(projectId, out Guid projectIdAsGuid))
+                {
+                    var project = await _mediator.Send(new UpdateProjectCommand(projectIdAsGuid, userId, dto));
+                    return Ok(project);
+                }
             }
 
             return Unauthorized("Kullanıcı kimliği doğrulanamadı.");

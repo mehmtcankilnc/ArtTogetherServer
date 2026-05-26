@@ -7,4 +7,7 @@ public interface IStrokeRepository
     Task AddAsync(Stroke stroke);
     Task<IEnumerable<Stroke>> GetBySessionIdAsync(Guid projectId);
     Task ClearSessionAsync(Guid projectId);
+    Task<Stroke?> GetByStrokeIdAsync(Guid strokeId);
+    Task SaveAsync(Stroke stroke);
+    Task SoftDeleteStrokesByProjectIdAsync(Guid projectId);
 }

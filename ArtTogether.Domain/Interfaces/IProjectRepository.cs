@@ -8,4 +8,6 @@ public interface IProjectRepository
     Task<bool> IsMemberAsync(Guid projectId, Guid userId);
     Task AddMemberAsync(ProjectMember membership);
     Task<IEnumerable<Project>> GetByUserIdAsync(Guid userId);
+    Task<Project?> GetProjectByIdAsync(Guid projectId);
+    Task SaveChangesAsync();
 }

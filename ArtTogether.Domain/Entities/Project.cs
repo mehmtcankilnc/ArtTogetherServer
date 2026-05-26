@@ -7,6 +7,7 @@ public class Project
     public string Width { get; set; } = "1920";
     public string Height { get; set; } = "1080";
     public string BackgroundColor { get; set; } = "#FFFFFF";
+    public List<string> Swatches { get; set; } = ["", "", "", "", ""];
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public Guid CreatedUserId { get; set; }

@@ -1,4 +1,5 @@
 ﻿using ArtTogether.Application.DTOs;
+using ArtTogether.Domain.Entities;
 using ArtTogether.Domain.Interfaces;
 using MediatR;
 
@@ -17,9 +18,11 @@ public class GetStrokesBySessionQueryHandler(IStrokeRepository repository)
 
         return strokes.Select(s => new StrokeDto
         {
+            Id = s.Id,
             Color = s.Color,
             Width = s.Width,
             PathData = s.PathData,
+            IsEraser = s.Type == StrokeType.Eraser
         }).ToList();
     }
 }

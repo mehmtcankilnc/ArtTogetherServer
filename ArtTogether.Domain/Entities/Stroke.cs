@@ -10,6 +10,7 @@ public class Stroke
     public string Color { get; set; }
     public float Width { get; set; }
     public string PathData { get; set; } = null!;
+    public bool IsDeleted { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public StrokeType Type { get; set; } = StrokeType.Brush;
 }
